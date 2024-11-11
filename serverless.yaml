@@ -21,6 +21,8 @@ functions:
           path: bookings
           method: post
           cors: true
+    environment:
+      DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME}
 
   getBooking:
     handler: src/handlers/getBooking/index.handler
@@ -29,6 +31,8 @@ functions:
           path: bookings/{id}
           method: get
           cors: true
+    environment:
+      DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME}
 
   updateBooking:
     handler: src/handlers/updateBooking/index.handler
@@ -37,6 +41,8 @@ functions:
           path: bookings/{id}
           method: put
           cors: true
+    environment:
+      DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME}
 
   deleteBooking:
     handler: src/handlers/deleteBooking/index.handler
@@ -45,3 +51,21 @@ functions:
           path: bookings/{id}
           method: delete
           cors: true
+    environment:
+      DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME}
+
+resources:
+  Resources:
+    BookingsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${env:DYNAMODB_TABLE_NAME}
+        AttributeDefinitions:
+          - AttributeName: bookingId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: bookingId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
