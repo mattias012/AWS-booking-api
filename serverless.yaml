@@ -3,9 +3,9 @@ service: booking-api
 provider:
   name: aws
   runtime: nodejs20.x
-  profile: ${env:AWS_PROFILE}
-  region: eu-north-1
-  role: ${env:AWS_LAMBDA_ROLE_ARN}
+  profile: ${env:AWS_PROFILE}       # Use profil from .env
+  region: ${env:REGION}             # Use region from .env
+  role: ${env:AWS_LAMBDA_ROLE_ARN}  # Use IAM-role from .env
 
 package:
   individually: true
@@ -16,6 +16,8 @@ plugins:
 functions:
   hello:
     handler: handler.hello
+    environment:                
+      DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME}
     events:
       - http:
           path: hello
