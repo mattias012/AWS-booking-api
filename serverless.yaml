@@ -1,0 +1,22 @@
+service: booking-api
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  profile: ${env:AWS_PROFILE}
+  region: eu-north-1
+  role: ${env:AWS_LAMBDA_ROLE_ARN}
+
+package:
+  individually: true
+
+plugins:
+  - serverless-dotenv-plugin
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - http:
+          path: hello
+          method: get
