@@ -3,9 +3,9 @@ service: booking-api
 provider:
   name: aws
   runtime: nodejs20.x
-  profile: ${env:AWS_PROFILE}       # Use profil from .env
-  region: ${env:REGION}             # Use region from .env
-  role: ${env:AWS_LAMBDA_ROLE_ARN}  # Use IAM-role from .env
+  profile: ${env:AWS_PROFILE}
+  region: ${env:REGION}
+  role: ${env:AWS_LAMBDA_ROLE_ARN}
 
 package:
   individually: true
@@ -14,11 +14,34 @@ plugins:
   - serverless-dotenv-plugin
 
 functions:
-  hello:
-    handler: handler.hello
-    environment:                
-      DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME}
+  createBooking:
+    handler: src/handlers/createBooking/index.handler
     events:
       - http:
-          path: hello
+          path: bookings
+          method: post
+          cors: true
+
+  getBooking:
+    handler: src/handlers/getBooking/index.handler
+    events:
+      - http:
+          path: bookings/{id}
           method: get
+          cors: true
+
+  updateBooking:
+    handler: src/handlers/updateBooking/index.handler
+    events:
+      - http:
+          path: bookings/{id}
+          method: put
+          cors: true
+
+  deleteBooking:
+    handler: src/handlers/deleteBooking/index.handler
+    events:
+      - http:
+          path: bookings/{id}
+          method: delete
+          cors: true
