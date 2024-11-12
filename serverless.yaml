@@ -15,56 +15,91 @@ plugins:
 
 functions:
   createBooking:
-    handler: src/handlers/createBooking/index.handler
+    handler: handlers/createBooking.index
     events:
       - http:
           path: bookings
           method: post
           cors: true
     environment:
-      DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME}
+      DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
+      DYNAMODB_ROOMS_TABLE: ${env:DYNAMODB_ROOMS_TABLE}
 
   getBooking:
-    handler: src/handlers/getBooking/index.handler
+    handler: handlers/getBooking.index
     events:
       - http:
           path: bookings/{id}
           method: get
           cors: true
     environment:
-      DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME}
+      DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
+
+  allBookings:
+    handler: handlers/allBookings.index
+    events:
+      - http:
+          path: allBookings
+          method: get
+          cors: true
+    environment:
+      DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
 
   updateBooking:
-    handler: src/handlers/updateBooking/index.handler
+    handler: handlers/updateBooking.index
     events:
       - http:
           path: bookings/{id}
           method: put
           cors: true
     environment:
-      DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME}
+      DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
 
   deleteBooking:
-    handler: src/handlers/deleteBooking/index.handler
+    handler: handlers/deleteBooking.index
     events:
       - http:
           path: bookings/{id}
           method: delete
           cors: true
     environment:
-      DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME}
+      DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
+
+  getAvailableRooms:
+    handler: handlers/getAvailableRooms.index
+    events:
+      - http:
+          path: rooms/availability
+          method: get
+          cors: true
+    environment:
+      DYNAMODB_ROOMS_TABLE: ${env:DYNAMODB_ROOMS_TABLE}
 
 resources:
   Resources:
     BookingsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${env:DYNAMODB_TABLE_NAME}
+        TableName: ${env:DYNAMODB_BOOKINGS_TABLE}
         AttributeDefinitions:
           - AttributeName: bookingId
             AttributeType: S
         KeySchema:
           - AttributeName: bookingId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+
+    RoomsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${env:DYNAMODB_ROOMS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: roomId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: roomId
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         StreamSpecification:
