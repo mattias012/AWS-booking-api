@@ -7,7 +7,7 @@ module.exports.handler = async (event) => {
   const bookingId = uuidv4();  //Unique ID for booking
 
   const params = {
-    TableName: process.env.DYNAMODB_TABLE_NAME,
+    TableName: process.env.DYNAMODB_BOOKINGS_TABLE,
     Item: {
       bookingId,               
       guestName,              
@@ -24,10 +24,10 @@ module.exports.handler = async (event) => {
       body: JSON.stringify({ message: "Booking created successfully!", bookingId }),
     };
   } catch (error) {
-    console.error("Error creating booking:", error);
+    console.error("Error creating booking:", error.stack);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Could not create booking" }),
+      body: JSON.stringify({ error: "Could not create booking", details: error.message }),
     };
   }
 };
