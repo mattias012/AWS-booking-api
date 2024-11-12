@@ -1,3 +1,6 @@
+const AWS = require('aws-sdk');
+const dynamoDb = new AWS.DynamoDB.DocumentClient();
+
 module.exports.handler = async (event) => {
     const bookingId = event.pathParameters.id;
     // Mockup response for deleting a booking by ID
