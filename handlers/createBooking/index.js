@@ -62,11 +62,9 @@ module.exports.handler = async (event) => {
         UpdateExpression: "SET availableRooms = availableRooms - :decrement",
         ExpressionAttributeValues: {
           ":decrement": { N: "1" },
+          ":zero": { N: "0" },  // Correctly defined within the same object
         },
         ConditionExpression: "availableRooms > :zero",
-        ExpressionAttributeValues: {
-          ":zero": { N: "0" },
-        },
       };
 
       // Use UpdateItemCommand to decrement available rooms

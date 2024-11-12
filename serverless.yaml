@@ -3,7 +3,7 @@ service: booking-api
 provider:
   name: aws
   runtime: nodejs20.x
-  profile: ${env:AWS_PROFILE}
+  #profile: ${env:AWS_PROFILE}
   region: ${env:REGION}
   iam:
     role: ${env:AWS_LAMBDA_ROLE_ARN}
