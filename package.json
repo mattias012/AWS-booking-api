@@ -8,12 +8,15 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "endpoints:\r   POST - https://i7s5gm792a.execute-api.eu-north-1.amazonaws.com/dev/bookings\r   GET - https://i7s5gm792a.execute-api.eu-north-1.amazonaws.com/dev/bookings/{id}\r   PUT - https://i7s5gm792a.execute-api.eu-north-1.amazonaws.com/dev/bookings/{id}\r   DELETE - https://i7s5gm792a.execute-api.eu-north-1.amazonaws.com/dev/bookings/",
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.687.0",
     "@aws-sdk/lib-dynamodb": "^3.689.0",
     "dotenv": "^16.4.5",
     "serverless-dotenv-plugin": "^6.0.0",
     "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "serverless-webpack": "^5.15.0"
   }
 }
