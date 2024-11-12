@@ -14,7 +14,6 @@ package:
 plugins:
   - serverless-dotenv-plugin
 
-
 functions:
   createBooking:
     handler: handlers/createBooking/index.handler
@@ -26,6 +25,7 @@ functions:
     environment:
       DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
       DYNAMODB_ROOMS_TABLE: ${env:DYNAMODB_ROOMS_TABLE}
+      DYNAMODB_ROOMS_AVAILABILITY_TABLE: ${env:DYNAMODB_ROOMS_AVAILABILITY_TABLE}
 
   getBooking:
     handler: handlers/getBooking/index.handler
@@ -76,6 +76,7 @@ functions:
           cors: true
     environment:
       DYNAMODB_ROOMS_TABLE: ${env:DYNAMODB_ROOMS_TABLE}
+      DYNAMODB_ROOMS_AVAILABILITY_TABLE: ${env:DYNAMODB_ROOMS_AVAILABILITY_TABLE}
 
 resources:
   Resources:
@@ -86,23 +87,48 @@ resources:
         AttributeDefinitions:
           - AttributeName: bookingId
             AttributeType: S
+          - AttributeName: roomType
+            AttributeType: S
+          - AttributeName: checkInDate
+            AttributeType: S
         KeySchema:
           - AttributeName: bookingId
             KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: RoomTypeIndex
+            KeySchema:
+              - AttributeName: roomType
+                KeyType: HASH
+              - AttributeName: checkInDate
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
-        StreamSpecification:
-          StreamViewType: NEW_AND_OLD_IMAGES
 
     RoomsTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${env:DYNAMODB_ROOMS_TABLE}
         AttributeDefinitions:
-          - AttributeName: roomId
+          - AttributeName: roomType
             AttributeType: S
         KeySchema:
-          - AttributeName: roomId
+          - AttributeName: roomType
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
-        StreamSpecification:
-          StreamViewType: NEW_AND_OLD_IMAGES
+
+    RoomsAvailabilityTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${env:DYNAMODB_ROOMS_AVAILABILITY_TABLE}
+        AttributeDefinitions:
+          - AttributeName: roomType
+            AttributeType: S
+          - AttributeName: date
+            AttributeType: S
+        KeySchema:
+          - AttributeName: roomType
+            KeyType: HASH
+          - AttributeName: date
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
