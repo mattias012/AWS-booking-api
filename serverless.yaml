@@ -5,7 +5,8 @@ provider:
   runtime: nodejs20.x
   profile: ${env:AWS_PROFILE}
   region: ${env:REGION}
-  role: ${env:AWS_LAMBDA_ROLE_ARN}
+  iam:
+    role: ${env:AWS_LAMBDA_ROLE_ARN}
 
 package:
   individually: true
@@ -13,9 +14,10 @@ package:
 plugins:
   - serverless-dotenv-plugin
 
+
 functions:
   createBooking:
-    handler: handlers/createBooking.index
+    handler: handlers/createBooking/index.handler
     events:
       - http:
           path: bookings
@@ -26,7 +28,7 @@ functions:
       DYNAMODB_ROOMS_TABLE: ${env:DYNAMODB_ROOMS_TABLE}
 
   getBooking:
-    handler: handlers/getBooking.index
+    handler: handlers/getBooking/index.handler
     events:
       - http:
           path: bookings/{id}
@@ -36,7 +38,7 @@ functions:
       DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
 
   allBookings:
-    handler: handlers/allBookings.index
+    handler: handlers/allBookings/index.handler
     events:
       - http:
           path: allBookings
@@ -46,7 +48,7 @@ functions:
       DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
 
   updateBooking:
-    handler: handlers/updateBooking.index
+    handler: handlers/updateBooking/index.handler
     events:
       - http:
           path: bookings/{id}
@@ -56,7 +58,7 @@ functions:
       DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
 
   deleteBooking:
-    handler: handlers/deleteBooking.index
+    handler: handlers/deleteBooking/index.handler
     events:
       - http:
           path: bookings/{id}
@@ -66,7 +68,7 @@ functions:
       DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
 
   getAvailableRooms:
-    handler: handlers/getAvailableRooms.index
+    handler: handlers/getAvailableRooms/index.handler
     events:
       - http:
           path: rooms/availability
