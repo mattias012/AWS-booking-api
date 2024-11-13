@@ -4,9 +4,11 @@ const { DynamoDBClient, GetItemCommand, UpdateItemCommand } = require("@aws-sdk/
 // Initialize DynamoDB client with the specified AWS region
 const dynamoDbClient = new DynamoDBClient({ region: process.env.REGION });
 
-// Function to check if there is enough room availability for the new booking dates.
-// We will use this function to validate the new booking details before updating the booking.
-// Basically the same function as in createBooking/index.js
+/*
+ * Function to check if there is enough room availability for the new booking dates.
+ * We will use this function to validate the new booking details before updating the booking.
+ * This is basically the same function as in createBooking/index.js, and it loops through each date in the booking range to check room availability.
+ */
 async function checkAvailability(roomCounts, checkIn, checkOut) {
   for (const [roomType, count] of Object.entries(roomCounts)) {
     const dateAvailabilityPromises = [];
@@ -14,10 +16,13 @@ async function checkAvailability(roomCounts, checkIn, checkOut) {
     // Loop through each date in the booking range to check availability
     for (let d = new Date(checkIn); d < checkOut; d.setDate(d.getDate() + 1)) {
       const formattedDate = d.toISOString().split("T")[0]; // Format date as "YYYY-MM-DD"
+      
+      // Define DynamoDB parameters for checking room availability on a specific date
       const checkAvailabilityParams = {
         TableName: process.env.DYNAMODB_ROOMS_AVAILABILITY_TABLE,
         Key: { roomType: { S: roomType }, date: { S: formattedDate } },
       };
+      
       // Add each availability check for the date to the promise array
       dateAvailabilityPromises.push(dynamoDbClient.send(new GetItemCommand(checkAvailabilityParams)));
     }
@@ -109,13 +114,17 @@ module.exports.handler = async (event) => {
   }
 };
 
- // Function to update room availability by adding or removing the booking.
+/*
+ * Helper function to update room availability by adding or removing the booking.
+ * Adjusts the availability record for each date by either decreasing or increasing the room count,
+ * and managing booking IDs in the room availability records..
+ */
 async function updateRoomAvailability(roomType, count, checkInDate, checkOutDate, bookingId, action) {
   // Loop through each date in the booking range
   for (let d = new Date(checkInDate); d < new Date(checkOutDate); d.setDate(d.getDate() + 1)) {
     const formattedDate = d.toISOString().split("T")[0];
 
-    //Update database with new availability
+    // Construct UpdateExpression and ExpressionAttributeValues based on whether we are adding or removing
     const updateParams = {
       TableName: process.env.DYNAMODB_ROOMS_AVAILABILITY_TABLE,
       Key: { roomType: { S: roomType }, date: { S: formattedDate } },
@@ -124,11 +133,16 @@ async function updateRoomAvailability(roomType, count, checkInDate, checkOutDate
         : "SET availableRooms = availableRooms + :count REMOVE bookingIds[0]",
       ExpressionAttributeValues: {
         ":count": { N: count.toString() },
-        ":newBookingId": { L: [{ S: bookingId }] },
-        ":emptyList": { L: [] },
       },
       ConditionExpression: action === "add" ? "availableRooms >= :count" : undefined,
     };
+
+    // Conditionally add additional ExpressionAttributeValues for "add" action
+    if (action === "add") {
+      updateParams.ExpressionAttributeValues[":newBookingId"] = { L: [{ S: bookingId }] };
+      updateParams.ExpressionAttributeValues[":emptyList"] = { L: [] };
+    }
+
     // Execute the update command for each date in the range
     await dynamoDbClient.send(new UpdateItemCommand(updateParams));
   }
