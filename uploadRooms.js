@@ -63,6 +63,7 @@ const uploadRooms = async () => {
 };
 
 // Lägger till tillgänglighet per datum
+// Lägger till tillgänglighet per datum
 const uploadRoomAvailability = async () => {
   await deleteAllItemsFromTable(availabilityTableName);
 
@@ -80,6 +81,7 @@ const uploadRoomAvailability = async () => {
           roomType: room.roomType,
           date: date.toISOString().split("T")[0], // YYYY-MM-DD format
           availableRooms: room.availableRooms,
+          bookingIds: []  // Initialize bookingIds as an empty list for each date
         },
       };
 
