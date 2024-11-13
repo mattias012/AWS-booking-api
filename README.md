@@ -3,7 +3,14 @@
 # How to use it: 
 
 endpoints:
-  POST - https://i7s5gm792a.execute-api.eu-north-1.amazonaws.com/dev/bookings
-  GET - https://i7s5gm792a.execute-api.eu-north-1.amazonaws.com/dev/bookings/{id}
-  PUT - https://i7s5gm792a.execute-api.eu-north-1.amazonaws.com/dev/bookings/{id}
-  DELETE - https://i7s5gm792a.execute-api.eu-north-1.amazonaws.com/dev/bookings/
+  POST - https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/bookings
+
+  GET - https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/bookings/{id}
+  
+  GET - https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/allBookings
+  
+  PUT - https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/bookings/{id}
+  
+  DELETE - https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/bookings/{id}
+  
+  GET - https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/rooms/availability
