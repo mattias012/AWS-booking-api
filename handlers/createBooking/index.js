@@ -148,9 +148,9 @@ module.exports.handler = async (event) => {
       if (count === 0) continue;
 
       const newBooking = {
-        bookingId: { S: uuidv4() },
+        bookingId: { S: bookingId },  // Chnaged, using the same bookingId generated earlier
         guestName: { S: guestName },
-        guestCount: {S: guestCount.toString()},
+        guestCount: { S: guestCount.toString() },
         email: { S: email },
         roomType: { S: roomType },
         roomCount: { N: count.toString() },
