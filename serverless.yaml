@@ -3,9 +3,10 @@ service: booking-api
 provider:
   name: aws
   runtime: nodejs20.x
-  profile: ${env:AWS_PROFILE}
+  # profile: ${env:AWS_PROFILE}
   region: ${env:REGION}
-  role: ${env:AWS_LAMBDA_ROLE_ARN}
+  iam:
+    role: ${env:AWS_LAMBDA_ROLE_ARN}
 
 package:
   individually: true
@@ -15,57 +16,120 @@ plugins:
 
 functions:
   createBooking:
-    handler: src/handlers/createBooking/index.handler
+    handler: handlers/createBooking/index.handler
     events:
       - http:
           path: bookings
           method: post
           cors: true
     environment:
-      DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME}
+      DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
+      DYNAMODB_ROOMS_TABLE: ${env:DYNAMODB_ROOMS_TABLE}
+      DYNAMODB_ROOMS_AVAILABILITY_TABLE: ${env:DYNAMODB_ROOMS_AVAILABILITY_TABLE}
 
   getBooking:
-    handler: src/handlers/getBooking/index.handler
+    handler: handlers/getBooking/index.handler
     events:
       - http:
           path: bookings/{id}
           method: get
           cors: true
     environment:
-      DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME}
+      DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
+
+  allBookings:
+    handler: handlers/allBookings/index.handler
+    events:
+      - http:
+          path: allBookings
+          method: get
+          cors: true
+    environment:
+      DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
 
   updateBooking:
-    handler: src/handlers/updateBooking/index.handler
+    handler: handlers/updateBooking/index.handler
     events:
       - http:
           path: bookings/{id}
           method: put
           cors: true
     environment:
-      DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME}
+      DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
 
   deleteBooking:
-    handler: src/handlers/deleteBooking/index.handler
+    handler: handlers/deleteBooking/index.handler
     events:
       - http:
           path: bookings/{id}
           method: delete
           cors: true
     environment:
-      DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME}
+      DYNAMODB_BOOKINGS_TABLE: ${env:DYNAMODB_BOOKINGS_TABLE}
+
+  getAvailableRooms:
+    handler: handlers/getAvailableRooms/index.handler
+    events:
+      - http:
+          path: rooms/availability
+          method: get
+          cors: true
+    environment:
+      DYNAMODB_ROOMS_TABLE: ${env:DYNAMODB_ROOMS_TABLE}
+      DYNAMODB_ROOMS_AVAILABILITY_TABLE: ${env:DYNAMODB_ROOMS_AVAILABILITY_TABLE}
 
 resources:
   Resources:
     BookingsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${env:DYNAMODB_TABLE_NAME}
+        TableName: ${env:DYNAMODB_BOOKINGS_TABLE}
         AttributeDefinitions:
           - AttributeName: bookingId
+            AttributeType: S
+          - AttributeName: roomType
+            AttributeType: S
+          - AttributeName: checkInDate
             AttributeType: S
         KeySchema:
           - AttributeName: bookingId
             KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: RoomTypeIndex
+            KeySchema:
+              - AttributeName: roomType
+                KeyType: HASH
+              - AttributeName: checkInDate
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
-        StreamSpecification:
-          StreamViewType: NEW_AND_OLD_IMAGES
+
+    RoomsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${env:DYNAMODB_ROOMS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: roomType
+            AttributeType: S
+        KeySchema:
+          - AttributeName: roomType
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    RoomsAvailabilityTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${env:DYNAMODB_ROOMS_AVAILABILITY_TABLE}
+        AttributeDefinitions:
+          - AttributeName: roomType
+            AttributeType: S
+          - AttributeName: date
+            AttributeType: S
+        KeySchema:
+          - AttributeName: roomType
+            KeyType: HASH
+          - AttributeName: date
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+

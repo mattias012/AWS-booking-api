@@ -1,0 +1,193 @@
+# Specifies the OpenAPI version used for the specification
+openapi: 3.0.0
+
+# Basic information about the API, including a detailed description as README
+info:
+  title: Booking API               # Name of the API
+  version: "1.0.0"                 # Version of the API
+  description: |
+    # Booking API Documentation
+
+    **Version:** 1.0.0  
+    **Description:** The Booking API provides a way to manage hotel bookings, including creating, updating, retrieving, and deleting bookings, as well as checking room availability. It is designed to support hotel operations by allowing clients to make and manage reservations in a scalable, serverless environment.
+
+    ### Endpoints
+
+    - **/bookings**: Create, update, retrieve, or delete a booking by ID.
+    - **/rooms/availability**: Check room availability for specific dates.
+
+    ### Getting Started
+
+    To use the API, you’ll need to have a valid API key. Please contact the administrator or refer to your access documentation for API key setup.
+
+    ### Test the API
+
+    You can test each endpoint using the live links below, which point to our AWS deployment environment. Make sure to include your API key in the request headers where necessary.
+
+    - **Create a Booking:** [POST /bookings](https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/bookings)
+    - **Get a Booking by ID:** [GET /bookings/{id}](https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/bookings/{id})
+    - **Update a Booking:** [PUT /bookings/{id}](https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/bookings/{id})
+    - **Delete a Booking:** [DELETE /bookings/{id}](https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/bookings/{id})
+    - **Check Room Availability:** [GET /rooms/availability](https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/rooms/availability)
+
+    ### Response Codes
+
+    - **200**: Success
+    - **201**: Created (for successful bookings)
+    - **400**: Bad request (validation errors)
+    - **404**: Not found (when a booking ID does not exist)
+    - **500**: Server error
+
+    ### Additional Resources
+
+    - **SwaggerHub Documentation**: This page provides detailed API documentation and testing capabilities.
+    - **Support**: If you encounter issues or have questions, please reach out to our support team.
+
+# Paths section contains all the endpoints for the API
+paths:
+  # Endpoint for creating a new booking
+  /bookings:
+    post:                           # HTTP method for creating a booking (POST)
+      summary: Create a booking     # Short summary of this operation
+      description: Creates a new booking for a specified guest and room type.  # Description of what this endpoint does
+      requestBody:                  # Description of the request body (data the client needs to send)
+        description: Booking details such as guest name, email, and room preferences.
+        required: true              # Indicates this request body is mandatory
+        content:                    # Specification of the type of data accepted
+          application/json:         # Media type (JSON in this case)
+            schema:                 # Structure for the request body
+              type: object          # The data type is an object
+              properties:           # List of fields in the request body
+                guestName:
+                  type: string      # Data type for guestName is a string
+                  description: Name of the guest
+                email:
+                  type: string      # Data type for email is a string
+                  description: Email of the guest
+                guestCount:
+                  type: integer     # Data type for guestCount is an integer
+                  description: Number of guests
+                roomType:
+                  type: string      # Data type for roomType is a string
+                  description: Type of room requested
+                checkInDate:
+                  type: string
+                  format: date      # Data type is a date
+                  description: Check-in date
+                checkOutDate:
+                  type: string
+                  format: date
+                  description: Check-out date
+      responses:                    # Possible responses from the server
+        "201":                      # HTTP status code 201 for a created booking
+          description: Booking created successfully
+        "400":                      # HTTP status code 400 for a bad request
+          description: Invalid room setup or unavailable rooms
+        "500":                      # HTTP status code 500 for a server error
+          description: Server error
+
+  # Endpoint for retrieving a booking based on ID
+  /bookings/{id}:
+    get:                            # HTTP method to retrieve data (GET)
+      summary: Get booking by ID
+      description: Fetches booking details by booking ID.
+      parameters:                   # List of parameters required in the URL
+        - in: path                  # Specifies the location of the parameter (in this case, in the path)
+          name: id                  # Name of the parameter
+          schema:
+            type: string            # Data type for id is a string
+          required: true            # Parameter is mandatory
+          description: Unique ID of the booking
+      responses:
+        "200":                      # HTTP status code 200 for successful retrieval
+          description: Booking details retrieved successfully
+        "404":                      # HTTP status code 404 if the booking is not found
+          description: Booking not found
+        "500":                      # HTTP status code 500 for a server error
+          description: Server error
+
+    put:                            # HTTP method to update data (PUT)
+      summary: Update booking by ID
+      description: Updates booking information for a given booking ID.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Unique ID of the booking
+      requestBody:
+        description: Booking update details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                guestName:
+                  type: string
+                  description: Updated guest name
+                email:
+                  type: string
+                  description: Updated guest email
+                checkInDate:
+                  type: string
+                  format: date
+                  description: Updated check-in date
+                checkOutDate:
+                  type: string
+                  format: date
+                  description: Updated check-out date
+      responses:
+        "200":
+          description: Booking updated successfully
+        "404":
+          description: Booking not found
+        "500":
+          description: Server error
+
+    delete:                         # HTTP method to delete data (DELETE)
+      summary: Delete booking by ID
+      description: Deletes a booking by its unique ID.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Unique ID of the booking
+      responses:
+        "200":
+          description: Booking deleted successfully
+        "404":
+          description: Booking not found
+        "500":
+          description: Server error
+
+  # Endpoint to check room availability
+  /rooms/availability:
+    get:                            # HTTP method to retrieve availability (GET)
+      summary: Get available rooms
+      description: Retrieves availability of rooms for specified dates.
+      parameters:
+        - in: query                 # The parameter is in the query part of the URL
+          name: startDate
+          schema:
+            type: string
+            format: date
+          required: true
+          description: Start date for availability check
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date
+          required: true
+          description: End date for availability check
+      responses:
+        "200":
+          description: Room availability retrieved successfully
+        "400":
+          description: Invalid date range or parameters
+        "500":
+          description: Server error

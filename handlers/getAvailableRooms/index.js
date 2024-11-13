@@ -3,10 +3,10 @@ const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 module.exports.handler = async (event) => {
     const bookingId = event.pathParameters.id;
-    // Mockup response for updating a booking by ID
+    // Mockup response for fetching a booking by ID
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: `Updated booking with ID: ${bookingId}` }),
+      body: JSON.stringify({ message: `Fetched booking with ID: ${bookingId}` }),
     };
   };
   
