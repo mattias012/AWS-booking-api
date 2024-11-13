@@ -16,10 +16,6 @@ info:
     - **/bookings**: Create, update, retrieve, or delete a booking by ID.
     - **/rooms/availability**: Check room availability for specific dates.
 
-    ### Getting Started
-
-    To use the API, you’ll need to have a valid API key. Please contact the administrator or refer to your access documentation for API key setup.
-
     ### Test the API
 
     You can test each endpoint using the live links below, which point to our AWS deployment environment. Make sure to include your API key in the request headers where necessary.
