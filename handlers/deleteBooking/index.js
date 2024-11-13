@@ -44,9 +44,12 @@ module.exports.handler = async (event) => {
     await dynamoDbClient.send(new DeleteItemCommand(deleteBookingParams));
 
     // Step 2: Update room availability for each day of the booking period
+    // First create a promise array to store all update commands
     const updateAvailabilityPromises = [];
+      // Loop through each date from check-in to check-out
     for (let d = new Date(checkIn); d < new Date(checkOutDate.S); d.setDate(d.getDate() + 1)) {
-      const formattedDate = d.toISOString().split("T")[0];
+
+      const formattedDate = d.toISOString().split("T")[0]; // Format the date as YYYY-MM-DD
 
       // Retrieve the availability record to find the index of bookingId
       const checkAvailabilityParams = {
@@ -55,29 +58,31 @@ module.exports.handler = async (event) => {
       };
       const availabilityData = await dynamoDbClient.send(new GetItemCommand(checkAvailabilityParams));
 
+      // If the availability record exists and has booking IDs
       if (availabilityData.Item && availabilityData.Item.bookingIds) {
-        const bookingIds = availabilityData.Item.bookingIds.L.map(id => id.S);
-        const bookingIndex = bookingIds.indexOf(bookingId);
+      
+        const bookingIds = availabilityData.Item.bookingIds.L.map(id => id.S); // Extract booking IDs as an array of strings
+        const bookingIndex = bookingIds.indexOf(bookingId); // Find the index of the booking ID to be canceled
 
+        // If the booking ID is found in the list
         if (bookingIndex !== -1) {
           const updateAvailabilityParams = {
             TableName: process.env.DYNAMODB_ROOMS_AVAILABILITY_TABLE,
             Key: { roomType: { S: roomType.S }, date: { S: formattedDate } },
             UpdateExpression: "SET availableRooms = availableRooms + :count REMOVE bookingIds[" + bookingIndex + "]",
+            // Increase the available rooms count and remove the booking ID from the list
             ExpressionAttributeValues: {
               ":count": { N: roomCount.N },
-            },
-            ConditionExpression: "contains(bookingIds, :bookingId)",
-            ExpressionAttributeValues: {
               ":bookingId": { S: bookingId },
-              ":count": { N: roomCount.N },
             },
+            ConditionExpression: "contains(bookingIds, :bookingId)", // Ensure the booking ID exists in the list before updating
           };
           updateAvailabilityPromises.push(dynamoDbClient.send(new UpdateItemCommand(updateAvailabilityParams)));
+          // Add the update command to the list of promises to be executed
         }
       }
     }
-    await Promise.all(updateAvailabilityPromises);
+    await Promise.all(updateAvailabilityPromises); // Execute all update commands in parallel
 
     // Return a confirmation message
     return {
@@ -85,7 +90,7 @@ module.exports.handler = async (event) => {
       body: JSON.stringify({ message: "Booking successfully canceled." }),
     };
   } catch (error) {
-    console.error("Error canceling booking:", error);
+    console.error("Error canceling booking:", error); // Log the error for debugging
     return {
       statusCode: 500,
       body: JSON.stringify({ message: "Could not cancel the booking.", error: error.message }),
