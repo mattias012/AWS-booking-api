@@ -115,6 +115,7 @@ async function updateRoomAvailability(roomType, count, checkInDate, checkOutDate
   for (let d = new Date(checkInDate); d < new Date(checkOutDate); d.setDate(d.getDate() + 1)) {
     const formattedDate = d.toISOString().split("T")[0];
 
+    //Update database with new availability
     const updateParams = {
       TableName: process.env.DYNAMODB_ROOMS_AVAILABILITY_TABLE,
       Key: { roomType: { S: roomType }, date: { S: formattedDate } },
