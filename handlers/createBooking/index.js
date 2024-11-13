@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require("uuid");  // Import UUID library to generate uniq
 // Initialize DynamoDBClient with the AWS region specified in environment variables
 const dynamoDbClient = new DynamoDBClient({ region: process.env.REGION });
 
-// Helper function to validate if the requested room setup matches the guest count
+//Function to validate if the requested room setup matches the guest count
 function isRoomSetupValid(guestCount, roomType, rooms) {
   const roomCapacity = {
     single: 1,
@@ -15,7 +15,7 @@ function isRoomSetupValid(guestCount, roomType, rooms) {
   return guestCount <= roomCapacity[roomType] * rooms;
 }
 
-// Helper function to determine room requirements based on guest count if roomType isn't specified
+//Function to determine room requirements based on guest count if roomType isn't specified
 function determineRoomRequirements(guestCount) {
   const roomRequirements = { single: 0, double: 0, suite: 0 };
 
@@ -64,6 +64,7 @@ module.exports.handler = async (event) => {
   const checkOut = new Date(checkOutDate);  // Parse check-out date
   const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));  // Calculate number of nights
 
+  //Initialize roomCounts
   let roomCounts;
   
   // Validate room setup if roomType and rooms are specified
@@ -136,14 +137,15 @@ module.exports.handler = async (event) => {
           ConditionExpression: "availableRooms >= :count",  // Ensure there are enough available rooms
         };
         
-        
         updateAvailabilityPromises.push(dynamoDbClient.send(new UpdateItemCommand(updateAvailabilityParams)));
       }
       await Promise.all(updateAvailabilityPromises);
     }
 
     // Step 3: Create booking entry with room counts for each room type
+    // Initialize an array to store all booking entries for each room type
     const bookingEntries = [];
+    //If roomType and rooms are specified, use that, otherwise use the roomCounts
     for (const [roomType, count] of Object.entries(roomCounts)) {
       if (count === 0) continue;
 
