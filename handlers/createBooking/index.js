@@ -10,7 +10,7 @@ function isRoomSetupValid(guestCount, roomType, rooms) {
   const roomCapacity = {
     single: 1,
     double: 2,
-    suite: 2
+    suite: 3
   };
   return guestCount <= roomCapacity[roomType] * rooms;
 }
@@ -22,7 +22,7 @@ function determineRoomRequirements(guestCount) {
   while (guestCount > 0) {
     if (guestCount >= 3) {
       roomRequirements.suite += 1;  // Use a suite if guests are 3 or more
-      guestCount -= 2;  // Each suite accommodates up to 2 guests
+      guestCount -= 3;  // Each suite accommodates up to 3 guests
     } else if (guestCount >= 2) {
       roomRequirements.double += 1;  // Double room for 2 guests
       guestCount -= 2;
@@ -34,6 +34,27 @@ function determineRoomRequirements(guestCount) {
   return roomRequirements;
 }
 
+function giveConfirmationAnswer(bookingId, checkInDate, checkOutDate, guestName,  guestCount) {
+
+  //The confirmation should contain:
+  //-Bookingid *
+  //-Guestname *
+  //-Number of guests* and rooms
+  //-Total sum of cost
+  //-Checkindate and checkoutdate *
+
+    let confirmationAnswer = {
+      message: "Booking created successfully!",
+      bookingId:bookingId,
+      guestName: guestName,
+      guestCount: guestCount,
+      checkInDate:checkInDate,
+      checkOutDate:checkOutDate
+    }
+    
+    return confirmationAnswer;
+    
+}
 // Main handler function that processes the booking request
 module.exports.handler = async (event) => {
   // Parse incoming JSON request body to extract booking details
@@ -129,6 +150,7 @@ module.exports.handler = async (event) => {
       const newBooking = {
         bookingId: { S: uuidv4() },
         guestName: { S: guestName },
+        guestCount: {S: guestCount.toString()},
         email: { S: email },
         roomType: { S: roomType },
         roomCount: { N: count.toString() },
@@ -144,9 +166,11 @@ module.exports.handler = async (event) => {
     }
     await Promise.all(bookingEntries);
 
+    let confirmationAnswer = giveConfirmationAnswer(bookingId, checkInDate, checkOutDate, guestName, guestCount);
+
     return {
       statusCode: 201,
-      body: JSON.stringify({ message: "Booking created successfully!", bookingId }),
+      body: JSON.stringify(confirmationAnswer),
     };
   } catch (error) {
     console.error("Error creating booking:", error.stack);
