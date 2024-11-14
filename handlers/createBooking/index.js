@@ -35,13 +35,6 @@ function determineRoomRequirements(guestCount) {
 }
 
 function giveConfirmationAnswer(bookingId, checkInDate, checkOutDate, guestName,  guestCount, roomCounts, totalCost) {
-  // let confirmationAnswer = giveConfirmationAnswer(bookingId, checkInDate, checkOutDate, guestCount, guestName, roomCounts, totalCost);
-  //The confirmation should contain:
-  //-Bookingid 
-  //-Guestname 
-  //-Number of guests and rooms
-  //-Total sum of cost
-  //-Checkindate and checkoutdate 
 
     let confirmationAnswer = {
       message: "Booking created successfully!",
