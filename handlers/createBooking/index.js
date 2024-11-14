@@ -34,26 +34,44 @@ function determineRoomRequirements(guestCount) {
   return roomRequirements;
 }
 
-function giveConfirmationAnswer(bookingId, checkInDate, checkOutDate, guestName,  guestCount) {
-
+function giveConfirmationAnswer(bookingId, checkInDate, checkOutDate, guestName,  guestCount, roomCounts, totalCost) {
+  // let confirmationAnswer = giveConfirmationAnswer(bookingId, checkInDate, checkOutDate, guestCount, guestName, roomCounts, totalCost);
   //The confirmation should contain:
-  //-Bookingid *
-  //-Guestname *
-  //-Number of guests* and rooms
+  //-Bookingid 
+  //-Guestname 
+  //-Number of guests and rooms
   //-Total sum of cost
-  //-Checkindate and checkoutdate *
+  //-Checkindate and checkoutdate 
 
     let confirmationAnswer = {
       message: "Booking created successfully!",
-      bookingId:bookingId,
-      guestName: guestName,
-      guestCount: guestCount,
-      checkInDate:checkInDate,
-      checkOutDate:checkOutDate
+      bookingId,
+      guestName,
+      guestCount,
+      checkInDate,
+      checkOutDate,
+      roomDetails: roomCounts, 
+      totalCost
     }
     
     return confirmationAnswer;
     
+}
+function countTotalCost(roomCounts, nights) {
+  const roomPrices = {single:500, double:1000, suite: 1500};
+  let totalCost=0;
+
+  for(let roomType in roomCounts) {
+    const count = roomCounts[roomType];
+    const pricePerNight = roomPrices[roomType];
+
+    totalCost += count*pricePerNight*nights;
+  }
+
+  console.log(totalCost);
+  return totalCost;
+
+
 }
 // Main handler function that processes the booking request
 module.exports.handler = async (event) => {
@@ -81,6 +99,7 @@ module.exports.handler = async (event) => {
     // Calculate room distribution if roomType is not specified
     roomCounts = determineRoomRequirements(guestCount);
   }
+  let totalCost = countTotalCost(roomCounts, nights);
 
   try {
     // Step 1: Check availability for each required room type across the date range
@@ -168,7 +187,7 @@ module.exports.handler = async (event) => {
     }
     await Promise.all(bookingEntries);
 
-    let confirmationAnswer = giveConfirmationAnswer(bookingId, checkInDate, checkOutDate, guestName, guestCount);
+    let confirmationAnswer = giveConfirmationAnswer(bookingId, checkInDate, checkOutDate,guestName, guestCount, roomCounts, totalCost);
 
     return {
       statusCode: 201,
