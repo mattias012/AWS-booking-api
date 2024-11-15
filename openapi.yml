@@ -9,12 +9,13 @@ info:
     # Booking API Documentation
 
     **Version:** 1.0.0  
-    **Description:** The Booking API provides a way to manage hotel bookings, including creating, updating, retrieving, and deleting bookings, as well as checking room availability. It is designed to support hotel operations by allowing clients to make and manage reservations in a scalable, serverless environment.
+    **Description:** The Booking API provides a way to manage hotel bookings. Availability is set up for 30 days forwards. The API allows users to create, update, retrieve, and delete bookings, as well as check room availability for specific dates.
 
     ### Endpoints
 
     - **/bookings**: Create, update, retrieve, or delete a booking by ID.
     - **/rooms/availability**: Check room availability for specific dates.
+    - **/allBookings**: Retrieve all bookings.
 
     ### Test the API
 
@@ -25,6 +26,7 @@ info:
     - **Update a Booking:** [PUT /bookings/{id}](https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/bookings/{id})
     - **Delete a Booking:** [DELETE /bookings/{id}](https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/bookings/{id})
     - **Check Room Availability:** [GET /rooms/availability](https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/rooms/availability)
+    - **Retrieve All Bookings:** [GET /allBookings](https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/allBookings)
 
     ### Response Codes
 
@@ -34,20 +36,17 @@ info:
     - **404**: Not found (when a booking ID does not exist)
     - **500**: Server error
 
-    ### Additional Resources
-
-    - **SwaggerHub Documentation**: This page provides detailed API documentation and testing capabilities.
-    - **Support**: If you encounter issues or have questions, please reach out to our support team.
+servers:
+  - url: https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev
+    description: AWS deployment environment
 
 # Paths section contains all the endpoints for the API
 paths:
   # Endpoint for creating a new booking
   /bookings:
     post:                           # HTTP method for creating a booking (POST)
-      summary: Create a booking     # Short summary of this operation
-      description: Creates a new booking for a specified guest and room type.  # Description of what this endpoint does
+      summary: Create a new booking     # Short summary of this operation
       requestBody:                  # Description of the request body (data the client needs to send)
-        description: Booking details such as guest name, email, and room preferences.
         required: true              # Indicates this request body is mandatory
         content:                    # Specification of the type of data accepted
           application/json:         # Media type (JSON in this case)
@@ -56,64 +55,79 @@ paths:
               properties:           # List of fields in the request body
                 guestName:
                   type: string      # Data type for guestName is a string
-                  description: Name of the guest
-                email:
-                  type: string      # Data type for email is a string
-                  description: Email of the guest
                 guestCount:
                   type: integer     # Data type for guestCount is an integer
-                  description: Number of guests
                 roomType:
                   type: string      # Data type for roomType is a string
-                  description: Type of room requested
+                roomCount:
+                  type: integer     # Data type for roomCount is an integer
                 checkInDate:
                   type: string
                   format: date      # Data type is a date
-                  description: Check-in date
                 checkOutDate:
                   type: string
                   format: date
-                  description: Check-out date
+              required:
+                - guestName
+                - guestCount
+                - roomType
+                - roomCount
+                - checkInDate
+                - checkOutDate
+            example:
+              guestName: "David Svensson"
+              email: "david@ma23.se"
+              guestCount: 1
+              roomType: "single"
+              roomCount: 1
+              checkInDate: "2024-11-20"
+              checkOutDate: "2024-11-22"
       responses:                    # Possible responses from the server
-        "201":                      # HTTP status code 201 for a created booking
+        '201':                      # HTTP status code 201 for a created booking
           description: Booking created successfully
-        "400":                      # HTTP status code 400 for a bad request
-          description: Invalid room setup or unavailable rooms
-        "500":                      # HTTP status code 500 for a server error
+        '400':                      # HTTP status code 400 for a bad request
+          description: Bad request
+        '500':                      # HTTP status code 500 for a server error
           description: Server error
 
   # Endpoint for retrieving a booking based on ID
   /bookings/{id}:
     get:                            # HTTP method to retrieve data (GET)
-      summary: Get booking by ID
-      description: Fetches booking details by booking ID.
+      summary: Get a booking by ID
       parameters:                   # List of parameters required in the URL
-        - in: path                  # Specifies the location of the parameter (in this case, in the path)
-          name: id                  # Name of the parameter
+        - name: id                  # Specifies the location of the parameter (in this case, in the path)
+          in: path                  # Name of the parameter
+          required: true            # Parameter is mandatory
           schema:
             type: string            # Data type for id is a string
-          required: true            # Parameter is mandatory
-          description: Unique ID of the booking
       responses:
-        "200":                      # HTTP status code 200 for successful retrieval
-          description: Booking details retrieved successfully
-        "404":                      # HTTP status code 404 if the booking is not found
+        '200':                      # HTTP status code 200 for successful retrieval
+          description: Booking retrieved successfully
+          content:
+            application/json:
+              example:
+                bookingId: "123"
+                email: "david@ma23.se"
+                guestName: "David Svensson"
+                guestCount: 1
+                roomType: "single"
+                roomCount: 1
+                checkInDate: "2024-11-20"
+                checkOutDate: "2024-11-22"
+        '404':                      # HTTP status code 404 if the booking is not found
           description: Booking not found
-        "500":                      # HTTP status code 500 for a server error
+        '500':                      # HTTP status code 500 for a server error
           description: Server error
 
     put:                            # HTTP method to update data (PUT)
-      summary: Update booking by ID
-      description: Updates booking information for a given booking ID.
+      summary: Update a booking by ID
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
+          required: true
           schema:
             type: string
-          required: true
-          description: Unique ID of the booking
       requestBody:
-        description: Booking update details
         required: true
         content:
           application/json:
@@ -122,24 +136,42 @@ paths:
               properties:
                 guestName:
                   type: string
-                  description: Updated guest name
-                email:
+                guestCount:
+                  type: integer
+                roomType:
                   type: string
-                  description: Updated guest email
+                roomCount:
+                  type: integer
                 checkInDate:
                   type: string
                   format: date
-                  description: Updated check-in date
                 checkOutDate:
                   type: string
                   format: date
-                  description: Updated check-out date
+              required:
+                - guestName
+                - email
+                - guestCount
+                - roomType
+                - roomCount
+                - checkInDate
+                - checkOutDate
+            example:
+              guestName: "David Svensson"
+              email: "david@ma23.se"
+              guestCount: 2
+              roomType: "double"
+              roomCount: 1
+              checkInDate: "2024-11-20"
+              checkOutDate: "2024-11-22"
       responses:
-        "200":
+        '200':
           description: Booking updated successfully
-        "404":
+        '400':
+          description: Bad request
+        '404':
           description: Booking not found
-        "500":
+        '500':
           description: Server error
 
     delete:                         # HTTP method to delete data (DELETE)
@@ -180,10 +212,67 @@ paths:
             format: date
           required: true
           description: End date for availability check
+        - in: query
+          name: roomType
+          schema:
+            type: string
+          required: false
+          description: Type of room to check availability for
       responses:
         "200":
           description: Room availability retrieved successfully
+          content:
+            application/json:
+              example:
+                roomType: "single"
+                availableRooms: 5
+                startDate: "2024-12-01"
+                endDate: "2024-12-05"
         "400":
           description: Invalid date range or parameters
         "500":
+          description: Server error
+
+  /allBookings:
+    get:
+      summary: Retrieve all bookings
+      description: Retrieves all bookings in the system.
+      parameters:
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date
+          required: true
+          description: Start date for bookings retrieval
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date
+          required: true
+          description: End date for bookings retrieval
+      responses:
+        '200':
+          description: All bookings retrieved successfully
+          content:
+            application/json:
+              example:
+                - bookingId: "123"
+                  email: "david@ma23.se"
+                  guestName: "David Svensson"
+                  guestCount: 1
+                  roomType: "single"
+                  roomCount: 1
+                  checkInDate: "2024-11-20"
+                  checkOutDate: "2024-11-22"
+                - bookingId: "124"
+                  email: "aws@amazon.com"
+                  guestName: "aws amazon"
+                  guestCount: 2
+                  roomType: "double"
+                  roomCount: 1
+                  checkInDate: "2024-12-10"
+                  checkOutDate: "2024-12-15"
+        '500':
           description: Server error
