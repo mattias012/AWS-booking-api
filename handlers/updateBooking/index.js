@@ -133,9 +133,9 @@ module.exports.handler = async (event) => {
       UpdateExpression: "SET guestName = :guestName, guestCount = :guestCount, roomType = :roomType, roomCount = :roomCount, checkInDate = :checkInDate, checkOutDate = :checkOutDate",
       ExpressionAttributeValues: {
         ":guestName": { S: guestName || "" },
-        ":guestCount": { S: guestCount.toString() || "0" },
+        ":guestCount": { N: (guestCount || 0).toString() },
         ":roomType": { S: roomType || "" },
-        ":roomCount": { N: rooms.toString() || "0" },
+        ":roomCount": { N: (rooms || 0).toString() },
         ":checkInDate": { S: checkInDate || "" },
         ":checkOutDate": { S: checkOutDate || "" },
       },
@@ -162,6 +162,9 @@ module.exports.handler = async (event) => {
  * and managing booking IDs in the room availability records..
  */
 async function updateRoomAvailability(roomType, count, checkInDate, checkOutDate, bookingId, action) {
+  // Validera count
+  const validCount = parseInt(count) || 0;
+  
   for (let d = new Date(checkInDate); d < new Date(checkOutDate); d.setDate(d.getDate() + 1)) {
     const formattedDate = d.toISOString().split("T")[0];
 
@@ -172,7 +175,7 @@ async function updateRoomAvailability(roomType, count, checkInDate, checkOutDate
         ? "SET availableRooms = availableRooms - :count, bookingIds = list_append(if_not_exists(bookingIds, :emptyList), :newBookingId)"
         : "SET availableRooms = availableRooms + :count REMOVE bookingIds[0]",
       ExpressionAttributeValues: {
-        ":count": { N: count.toString() },
+        ":count": { N: validCount.toString() },
       },
     };
 
@@ -181,7 +184,12 @@ async function updateRoomAvailability(roomType, count, checkInDate, checkOutDate
       updateParams.ExpressionAttributeValues[":emptyList"] = { L: [] };
     }
 
-    await dynamoDbClient.send(new UpdateItemCommand(updateParams));
+    try {
+      await dynamoDbClient.send(new UpdateItemCommand(updateParams));
+    } catch (error) {
+      console.error(`Error updating availability for date ${formattedDate}:`, error);
+      throw error;
+    }
   }
 }
 
