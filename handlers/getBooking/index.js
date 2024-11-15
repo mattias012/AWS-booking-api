@@ -51,13 +51,17 @@ module.exports.handler = async (event) => {
       bookingId: result.Item.bookingId.S,
       guestName: result.Item.guestName.S,
       email: result.Item.email.S,
-      guestCount: parseInt(result.Item.guestCount.S),
+      guestCount: result.Item.guestCount.N ? Number(result.Item.guestCount.N) : null,  // Changed from .S to .N
       roomType: result.Item.roomType.S,
-      rooms: parseInt(result.Item.roomCount.N),
+      roomCount: result.Item.roomCount.N ? Number(result.Item.roomCount.N) : null,  // Consistent naming with update function
       checkInDate: result.Item.checkInDate.S,
       checkOutDate: result.Item.checkOutDate.S,
       createdAt: result.Item.createdAt.S
     };
+
+    // Add debug logging
+    console.log('Raw DynamoDB Item:', JSON.stringify(result.Item, null, 2));
+    console.log('Converted booking:', JSON.stringify(booking, null, 2));
 
     // Return the booking data with a success status code
     return {

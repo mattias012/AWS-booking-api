@@ -40,118 +40,80 @@ async function checkAvailability(roomCounts, checkIn, checkOut) {
 
 // Main Lambda function handler for updating a booking
 module.exports.handler = async (event) => {
-  // Extract the booking ID from the request path
   const bookingId = event.pathParameters.id;
 
-  // Parse the new booking details from the request body
-  const { guestName, guestCount, roomType, rooms, checkInDate, checkOutDate } = JSON.parse(event.body);
+  // Parse and validate input with default values
+  const { guestName = "", guestCount = 0, roomType = "", roomCount = 0, checkInDate, checkOutDate, email = "" } = JSON.parse(event.body);
 
-  // Validate input
-  if (!guestName || typeof guestName !== "string") {
+  // Debug logging
+  console.log('Received values:', { guestCount, roomCount });
+
+  // Input Validation
+  if (!guestName || typeof guestName !== "string" || !email || typeof email !== "string") {
     return {
       statusCode: 400,
-      body: JSON.stringify({ message: "Invalid guestName. It must be a non-empty string." }),
+      body: JSON.stringify({ message: "Invalid guestName or email. Both must be non-empty strings." }),
     };
   }
 
-  if (!guestCount || isNaN(guestCount) || guestCount < 1) {
+  // Ensure guestCount and roomCount are numbers and not null
+  const validatedGuestCount = Number(guestCount);
+  const validatedRoomCount = Number(roomCount);
+
+  console.log('Validated values:', { validatedGuestCount, validatedRoomCount });
+
+  if (isNaN(validatedGuestCount) || validatedGuestCount < 1) {
     return {
       statusCode: 400,
       body: JSON.stringify({ message: "Invalid guestCount. It must be a positive number." }),
     };
   }
 
-  if (!checkInDate || isNaN(new Date(checkInDate))) {
+  if (isNaN(validatedRoomCount) || validatedRoomCount < 1) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ message: "Invalid checkInDate. It must be a valid date in YYYY-MM-DD format." }),
+      body: JSON.stringify({ message: "Invalid roomCount. It must be a positive number." }),
     };
   }
 
-  if (!checkOutDate || isNaN(new Date(checkOutDate)) || new Date(checkOutDate) <= new Date(checkInDate)) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ message: "Invalid checkOutDate. It must be a valid date after checkInDate." }),
-    };
-  }
-
-  if (roomType && typeof roomType !== "string") {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ message: "Invalid roomType. It must be a string." }),
-    };
-  }
-
-  if (rooms && (isNaN(rooms) || rooms < 1)) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ message: "Invalid rooms. It must be a positive number." }),
-    };
-  }
+  // Update booking details in DynamoDB with validated values
+  const updateBookingParams = {
+    TableName: process.env.DYNAMODB_BOOKINGS_TABLE,
+    Key: { 
+      bookingId: { S: bookingId } 
+    },
+    UpdateExpression: "SET guestName = :guestName, guestCount = :guestCount, roomType = :roomType, roomCount = :roomCount, checkInDate = :checkInDate, checkOutDate = :checkOutDate, email = :email",
+    ExpressionAttributeValues: {
+      ":guestName": { S: guestName },
+      ":guestCount": { N: validatedGuestCount.toString() },
+      ":roomType": { S: roomType },
+      ":roomCount": { N: validatedRoomCount.toString() },
+      ":checkInDate": { S: checkInDate },
+      ":checkOutDate": { S: checkOutDate },
+      ":email": { S: email }
+    },
+    ReturnValues: "ALL_NEW"  // This will return the updated item
+  };
 
   try {
-    // Step 1: Retrieve current booking details to compare old and new values
-    const getBookingParams = {
-      TableName: process.env.DYNAMODB_BOOKINGS_TABLE,
-      Key: { bookingId: { S: bookingId } },
-    };
-    const bookingData = await dynamoDbClient.send(new GetItemCommand(getBookingParams));
-
-    // If booking does not exist, return a 404 error response
-    if (!bookingData.Item) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ message: "Booking not found." }),
-      };
-    }
-
-    // Extract current booking details for use in updating the availability
-    const { checkInDate: oldCheckInDate, checkOutDate: oldCheckOutDate, roomType: oldRoomType, roomCount: oldRoomCount } = bookingData.Item;
-    const newCheckIn = new Date(checkInDate);
-    const newCheckOut = new Date(checkOutDate);
-
-    // Calculate required rooms based on new guest count and room type
-    const roomCounts = roomType && rooms ? { [roomType]: rooms } : determineRoomRequirements(guestCount);
-
-    // Step 2: Check availability for the new room configuration and dates
-    const isAvailable = await checkAvailability(roomCounts, newCheckIn, newCheckOut);
-    if (!isAvailable) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ message: "The selected room is not available for the new dates." }),
-      };
-    }
-
-    // Step 3: Adjust availability by removing the old booking and adding the new configuration
-    await updateRoomAvailability(oldRoomType.S, oldRoomCount.N, oldCheckInDate.S, oldCheckOutDate.S, bookingId, "remove");
-    await updateRoomAvailability(roomType, rooms, checkInDate, checkOutDate, bookingId, "add");
-
-    // Step 4: Update booking details in DYNAMODB_BOOKINGS_TABLE to reflect new information
-    const updateBookingParams = {
-      TableName: process.env.DYNAMODB_BOOKINGS_TABLE,
-      Key: { bookingId: { S: bookingId } },
-      UpdateExpression: "SET guestName = :guestName, guestCount = :guestCount, roomType = :roomType, roomCount = :roomCount, checkInDate = :checkInDate, checkOutDate = :checkOutDate",
-      ExpressionAttributeValues: {
-        ":guestName": { S: guestName || "" },
-        ":guestCount": { N: (guestCount || 0).toString() },
-        ":roomType": { S: roomType || "" },
-        ":roomCount": { N: (rooms || 0).toString() },
-        ":checkInDate": { S: checkInDate || "" },
-        ":checkOutDate": { S: checkOutDate || "" },
-      },
-    };
-    await dynamoDbClient.send(new UpdateItemCommand(updateBookingParams));
-
-    // Return a success response confirming booking update
+    const result = await dynamoDbClient.send(new UpdateItemCommand(updateBookingParams));
+    console.log('Update result:', result);
+    
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: "Booking updated successfully." }),
+      body: JSON.stringify({ 
+        message: "Booking updated successfully.",
+        updatedBooking: result.Attributes
+      }),
     };
   } catch (error) {
     console.error("Error updating booking:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: "Could not update the booking.", error: error.message }),
+      body: JSON.stringify({ 
+        message: "Could not update the booking.", 
+        error: error.message 
+      }),
     };
   }
 };

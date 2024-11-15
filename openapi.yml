@@ -80,8 +80,8 @@ paths:
               guestCount: 1
               roomType: "single"
               roomCount: 1
-              checkInDate: "2024-12-01"
-              checkOutDate: "2024-12-05"
+              checkInDate: "2024-11-20"
+              checkOutDate: "2024-11-22"
       responses:                    # Possible responses from the server
         '201':                      # HTTP status code 201 for a created booking
           description: Booking created successfully
@@ -112,8 +112,8 @@ paths:
                 guestCount: 1
                 roomType: "single"
                 roomCount: 1
-                checkInDate: "2024-12-01"
-                checkOutDate: "2024-12-05"
+                checkInDate: "2024-11-20"
+                checkOutDate: "2024-11-22"
         '404':                      # HTTP status code 404 if the booking is not found
           description: Booking not found
         '500':                      # HTTP status code 500 for a server error
@@ -162,8 +162,8 @@ paths:
               guestCount: 2
               roomType: "double"
               roomCount: 1
-              checkInDate: "2024-12-10"
-              checkOutDate: "2024-12-12"
+              checkInDate: "2024-11-20"
+              checkOutDate: "2024-11-22"
       responses:
         '200':
           description: Booking updated successfully
@@ -237,6 +237,21 @@ paths:
     get:
       summary: Retrieve all bookings
       description: Retrieves all bookings in the system.
+      parameters:
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date
+          required: true
+          description: Start date for bookings retrieval
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date
+          required: true
+          description: End date for bookings retrieval
       responses:
         '200':
           description: All bookings retrieved successfully
@@ -249,11 +264,11 @@ paths:
                   guestCount: 1
                   roomType: "single"
                   roomCount: 1
-                  checkInDate: "2024-12-01"
-                  checkOutDate: "2024-12-05"
+                  checkInDate: "2024-11-20"
+                  checkOutDate: "2024-11-22"
                 - bookingId: "124"
-                  email: "jane@doe.com"
-                  guestName: "Jane Doe"
+                  email: "aws@amazon.com"
+                  guestName: "aws amazon"
                   guestCount: 2
                   roomType: "double"
                   roomCount: 1
