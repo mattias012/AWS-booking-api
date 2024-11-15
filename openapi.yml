@@ -15,6 +15,7 @@ info:
 
     - **/bookings**: Create, update, retrieve, or delete a booking by ID.
     - **/rooms/availability**: Check room availability for specific dates.
+    - **/allBookings**: Retrieve all bookings.
 
     ### Test the API
 
@@ -25,6 +26,7 @@ info:
     - **Update a Booking:** [PUT /bookings/{id}](https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/bookings/{id})
     - **Delete a Booking:** [DELETE /bookings/{id}](https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/bookings/{id})
     - **Check Room Availability:** [GET /rooms/availability](https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/rooms/availability)
+    - **Retrieve All Bookings:** [GET /allBookings](https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev/allBookings)
 
     ### Response Codes
 
@@ -234,4 +236,33 @@ paths:
         "400":
           description: Invalid date range or parameters
         "500":
+          description: Server error
+
+  /allBookings:
+    get:
+      summary: Retrieve all bookings
+      description: Retrieves all bookings in the system.
+      responses:
+        '200':
+          description: All bookings retrieved successfully
+          content:
+            application/json:
+              example:
+                - bookingId: "123"
+                  email: "david@ma23.se"
+                  guestName: "David Svensson"
+                  guestCount: 1
+                  roomType: "single"
+                  roomCount: 1
+                  checkInDate: "2024-12-01"
+                  checkOutDate: "2024-12-05"
+                - bookingId: "124"
+                  email: "jane@doe.com"
+                  guestName: "Jane Doe"
+                  guestCount: 2
+                  roomType: "double"
+                  roomCount: 1
+                  checkInDate: "2024-12-10"
+                  checkOutDate: "2024-12-15"
+        '500':
           description: Server error
