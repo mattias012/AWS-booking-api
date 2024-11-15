@@ -2,7 +2,9 @@
 
 # How to use it: 
 
-API documentation: https://app.swaggerhub.com/apis-docs/MATTIAS_6/booking-api/1.0.0#/default/post_bookings
+Please note that rooms availability is only set for 30 days forwards (2024-12-15 max). All calls can be made using swaggerhub from link below.
+
+API documentation: https://app.swaggerhub.com/apis-docs/MATTIAS_6/booking-api/1.0.0
 
 
 
