@@ -7,7 +7,6 @@ const dynamoDbClient = new DynamoDBClient({ region: process.env.REGION });
 /*
  * Function to check if there is enough room availability for the new booking dates.
  * We will use this function to validate the new booking details before updating the booking.
- * This is basically the same function as in createBooking/index.js, and it loops through each date in the booking range to check room availability.
  */
 async function checkAvailability(roomCounts, checkIn, checkOut) {
   for (const [roomType, count] of Object.entries(roomCounts)) {
@@ -46,6 +45,49 @@ module.exports.handler = async (event) => {
 
   // Parse the new booking details from the request body
   const { guestName, guestCount, roomType, rooms, checkInDate, checkOutDate } = JSON.parse(event.body);
+
+  // Validate input
+  if (!guestName || typeof guestName !== "string") {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ message: "Invalid guestName. It must be a non-empty string." }),
+    };
+  }
+
+  if (!guestCount || isNaN(guestCount) || guestCount < 1) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ message: "Invalid guestCount. It must be a positive number." }),
+    };
+  }
+
+  if (!checkInDate || isNaN(new Date(checkInDate))) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ message: "Invalid checkInDate. It must be a valid date in YYYY-MM-DD format." }),
+    };
+  }
+
+  if (!checkOutDate || isNaN(new Date(checkOutDate)) || new Date(checkOutDate) <= new Date(checkInDate)) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ message: "Invalid checkOutDate. It must be a valid date after checkInDate." }),
+    };
+  }
+
+  if (roomType && typeof roomType !== "string") {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ message: "Invalid roomType. It must be a string." }),
+    };
+  }
+
+  if (rooms && (isNaN(rooms) || rooms < 1)) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ message: "Invalid rooms. It must be a positive number." }),
+    };
+  }
 
   try {
     // Step 1: Retrieve current booking details to compare old and new values
@@ -90,12 +132,12 @@ module.exports.handler = async (event) => {
       Key: { bookingId: { S: bookingId } },
       UpdateExpression: "SET guestName = :guestName, guestCount = :guestCount, roomType = :roomType, roomCount = :roomCount, checkInDate = :checkInDate, checkOutDate = :checkOutDate",
       ExpressionAttributeValues: {
-        ":guestName": { S: guestName },
-        ":guestCount": { S: guestCount.toString() },
-        ":roomType": { S: roomType },
-        ":roomCount": { N: rooms.toString() },
-        ":checkInDate": { S: checkInDate },
-        ":checkOutDate": { S: checkOutDate },
+        ":guestName": { S: guestName || "" },
+        ":guestCount": { S: guestCount.toString() || "0" },
+        ":roomType": { S: roomType || "" },
+        ":roomCount": { N: rooms.toString() || "0" },
+        ":checkInDate": { S: checkInDate || "" },
+        ":checkOutDate": { S: checkOutDate || "" },
       },
     };
     await dynamoDbClient.send(new UpdateItemCommand(updateBookingParams));
@@ -120,30 +162,48 @@ module.exports.handler = async (event) => {
  * and managing booking IDs in the room availability records..
  */
 async function updateRoomAvailability(roomType, count, checkInDate, checkOutDate, bookingId, action) {
-  // Loop through each date in the booking range
   for (let d = new Date(checkInDate); d < new Date(checkOutDate); d.setDate(d.getDate() + 1)) {
     const formattedDate = d.toISOString().split("T")[0];
 
-    // Construct UpdateExpression and ExpressionAttributeValues based on whether we are adding or removing
     const updateParams = {
       TableName: process.env.DYNAMODB_ROOMS_AVAILABILITY_TABLE,
       Key: { roomType: { S: roomType }, date: { S: formattedDate } },
-      UpdateExpression: action === "add" 
+      UpdateExpression: action === "add"
         ? "SET availableRooms = availableRooms - :count, bookingIds = list_append(if_not_exists(bookingIds, :emptyList), :newBookingId)"
         : "SET availableRooms = availableRooms + :count REMOVE bookingIds[0]",
       ExpressionAttributeValues: {
         ":count": { N: count.toString() },
       },
-      ConditionExpression: action === "add" ? "availableRooms >= :count" : undefined,
     };
 
-    // Conditionally add additional ExpressionAttributeValues for "add" action
     if (action === "add") {
       updateParams.ExpressionAttributeValues[":newBookingId"] = { L: [{ S: bookingId }] };
       updateParams.ExpressionAttributeValues[":emptyList"] = { L: [] };
     }
 
-    // Execute the update command for each date in the range
     await dynamoDbClient.send(new UpdateItemCommand(updateParams));
   }
+}
+
+/*
+ * Function to calculate room requirements based on the number of guests.
+ * If the room type is not specified, this function allocates rooms based on guest count.
+ */
+function determineRoomRequirements(guestCount) {
+  const roomRequirements = { single: 0, double: 0, suite: 0 };
+
+  while (guestCount > 0) {
+    if (guestCount >= 3) {
+      roomRequirements.suite += 1; // Allocate a suite if there are 3 or more guests
+      guestCount -= 3;             // A suite accommodates up to 3 guests
+    } else if (guestCount >= 2) {
+      roomRequirements.double += 1; // Allocate a double room for 2 guests
+      guestCount -= 2;
+    } else {
+      roomRequirements.single += 1; // Allocate a single room for 1 guest
+      guestCount -= 1;
+    }
+  }
+
+  return roomRequirements; // Return the calculated room distribution
 }
