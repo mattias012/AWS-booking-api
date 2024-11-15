@@ -9,7 +9,7 @@ info:
     # Booking API Documentation
 
     **Version:** 1.0.0  
-    **Description:** The Booking API provides a way to manage hotel bookings, including creating, updating, retrieving, and deleting bookings, as well as checking room availability. It is designed to support hotel operations by allowing clients to make and manage reservations in a scalable, serverless environment.
+    **Description:** The Booking API provides a way to manage hotel bookings. Availability is set up for 30 days forwards. The API allows users to create, update, retrieve, and delete bookings, as well as check room availability for specific dates.
 
     ### Endpoints
 
@@ -35,11 +35,6 @@ info:
     - **400**: Bad request (validation errors)
     - **404**: Not found (when a booking ID does not exist)
     - **500**: Server error
-
-    ### Additional Resources
-
-    - **SwaggerHub Documentation**: This page provides detailed API documentation and testing capabilities.
-    - **Support**: If you encounter issues or have questions, please reach out to our support team.
 
 servers:
   - url: https://mgn5egdnv0.execute-api.eu-north-1.amazonaws.com/dev
